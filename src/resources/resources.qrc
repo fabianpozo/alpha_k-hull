@@ -1,0 +1,13 @@
+<RCC>
+  <qresource prefix="Icons">
+    <file>icons8-deshacer-100.png</file>
+    <file>2.png</file>
+    <file>icons8-rehacer-100.png</file>
+    <file>icons8-goma-de-borrar-100.png</file>
+    <file>4243274_pencil_basic_app_ux_icon.png</file>
+    <file>NicePng_blueberry-png_5493695.png</file>
+    <file>png-transparent-computer-icons-encapsulated-postscript-eraser-angle-rectangle-triangle.png</file>
+    <file>png-transparent-computer-icons-redo-arrow-arrow-angle-triangle-black-thumbnail.png</file>
+    <file>png-transparent-computer-icons-undo-arrow-arrow-angle-triangle-black-thumbnail.png</file>
+  </qresource>
+</RCC>
