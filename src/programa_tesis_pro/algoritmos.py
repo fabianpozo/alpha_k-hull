@@ -4,7 +4,6 @@ from math import radians, sin, cos, pi
 from itertools import groupby as iterGroupBy
 import logging
 import pprint
-from sortedcontainers import SortedDict, SortedList
 from shapely import Point, LineString, Polygon
 from collections import defaultdict
 

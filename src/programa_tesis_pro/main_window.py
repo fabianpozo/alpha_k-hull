@@ -3,7 +3,7 @@ from PyQt5 import QtWidgets, QtGui, QtCore
 from PyQt5.QtWidgets import QApplication, QMainWindow, QGraphicsScene, QGraphicsView, QVBoxLayout, QLabel, QGraphicsTextItem, QGraphicsLineItem, QFileDialog, QGraphicsEllipseItem, QGraphicsPathItem, QGraphicsPolygonItem
 from PyQt5.QtGui import QPen, QColor, QBrush, QPainter, QTransform, QFont, QPainterPath, QPolygonF
 from PyQt5.QtCore import Qt, QLineF, QRectF, QPointF
-from programa_tesis_pro.design_GUI import Ui_MainWindow  # Importar el diseño generado por PyQt
+from design_GUI import Ui_MainWindow  # Importar el diseño generado por PyQt
 from algoritmos import *  
 import sys
 
