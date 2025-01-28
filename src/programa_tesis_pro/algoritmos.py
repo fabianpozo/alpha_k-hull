@@ -7,8 +7,8 @@ import pprint
 from shapely import Point, LineString, Polygon
 from collections import defaultdict
 
-# Configuración del logging
-logging.basicConfig(filename='depuracion_cuñas.log', filemode="w", level=logging.DEBUG, format='%(message)s')
+# Configuración del logging (level=logging.DEBUG) para obtener logs detallados
+logging.basicConfig(filename='depuracion_cuñas.log', filemode="w", level=logging.disable(logging.DEBUG) , format='%(message)s')
 #-----------------------------------------------------------convex-hull
 def graham_scan(points):
     """Calcular el Convex Hull usando el algoritmo Graham Scan, devolviendo los índices de los puntos en el Convex Hull."""
@@ -85,7 +85,6 @@ class WedgeCalculator:
         # Debug: Initial Configuration
         init_message = (f"Initialized WedgeCalculator with k={k}, alpha={alpha}°, "
                         f"sin_alpha={self.sin_alpha}, cos_alpha={self.cos_alpha}, cds_alpha={self.cds_alpha}")
-        print(init_message)
         logging.debug(init_message)
 
     def orientation_line(self, pa, pb, p, pb_is_direction=False, get_distance=False):
@@ -132,7 +131,6 @@ class WedgeCalculator:
 
         # Mensaje de depuración
         log_message = (f"Rotación calculada para los puntos PC: {pc}, PA: {pa}, PB: {pb} -> Puntaje: {score}\n")
-        print(log_message)
         logging.debug(log_message)
         return score
     
@@ -768,20 +766,20 @@ class WedgeCalculator:
             list: Lista de todas las cuñas procesadas con sus respectivos arcos.
         """
         # Obtener cuñas iniciales
-        print("---- CUÑAS ----")
+        logging.debug("---- CUÑAS ----")
         wedges = self.get_wedges(inver_x=False)
 
         # Indicar grupo (pueden existir varias cuñas en un mismo grupo)
         group = 0
-        print(f"Se encontraron {len(wedges)} cuñas.")
+        logging.debug(f"Se encontraron {len(wedges)} cuñas.")
 
         # Procesar cada cuña
         all_arcs = []
-        print("---- COMPUTO ----")
+        logging.debug("---- COMPUTO ----")
         for wedge_data in wedges:
             arcs = self.compute_one_wedge(wedge_data)
             all_arcs.append(arcs)
-            print(f"Cuña procesada: {wedge_data}")
+            logging.debug(f"Cuña procesada: {wedge_data}")
         
         return all_arcs
 
@@ -895,7 +893,7 @@ class WedgeCalculator:
         midpoint = center1 + a * (center2 - center1) / d
         intersection_x = midpoint[0] + h * (center2[1] - center1[1]) / d
         intersection_y = midpoint[1] - h * (center2[0] - center1[0]) / d
-        print(f'puntos de interseccion: X: {intersection_x}, Y: {intersection_y}')
+        logging.debug(f'puntos de interseccion: X: {intersection_x}, Y: {intersection_y}')
         return (intersection_x, intersection_y)
     
     def line_sweep_for_intersections(self, arcs_data):
