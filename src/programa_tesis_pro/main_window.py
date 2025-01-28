@@ -376,47 +376,6 @@ class GraphicsView(QGraphicsView):
         # Añadir el polígono a la escena
         self.scene.addItem(self.hull_polygon_item)
 
-    def draw_akhull(self, lines_and_arcs):
-        """
-        Dibuja las líneas y arcos calculados para el (alpha, k)-hull.
-        lines_and_arcs: iterable con líneas o arcos.
-        """
-        for element in lines_and_arcs:
-            if isinstance(element, np.ndarray):
-                # Aquí dibujamos líneas, ya que las líneas se representan como dos puntos.
-                p1, p2 = element
-                line = QLineF(QPointF(p1[0], p1[1]), QPointF(p2[0], p2[1]))
-                self.main_window.update_console(f"Dibujando línea entre puntos: {p1} y {p2}")  # Depuración
-                self.scene.addLine(line, QPen(QColor(Qt.red), 2))    #self.graphics_view.scene.addLine(line, QPen(QColor(Qt.red), 2))
-
-            elif isinstance(element, Arc):  # Adaptado para los arcos
-                # Calcular el centro y el radio del arco
-                center = element.circle_center()
-                radius = np.linalg.norm(center - element.p)
-
-                 # Depurar el centro y el radio
-                self.main_window.update_console(f"Dibujando arco con centro en: {center}, radio: {radius}")
-
-                
-                # Convertir a coordenadas de pantalla
-                q_center = QPointF(center[0], center[1])
-                p1 = QPointF(element.p[0], element.p[1])
-                p2 = QPointF(element.q[0], element.q[1])
-
-                # Calcular el ángulo inicial y la amplitud del arco
-                start_angle = np.degrees(angle_360(center, element.p))
-                arc_length = np.degrees(angle_to(center, element.p, element.q))
-
-                 # Depurar ángulo inicial y longitud del arco
-                self.main_window.update_console(f"Ángulo inicial: {start_angle}, Longitud del arco: {arc_length}")
-
-                # Definir el rectángulo donde estará el arco
-                rect = QRectF(q_center.x() - radius, q_center.y() - radius, 2 * radius, 2 * radius)
-
-                # Dibujar el arco usando `drawArc`
-                arc_item = self.scene.addArc(rect, start_angle * 16, arc_length * 16, QPen(QColor(Qt.blue), 2))
-    #arc_item = self.graphics_view.scene.addArc(rect, start_angle * 16, arc_length * 16, QPen(QColor(Qt.blue), 2))
-                self.graphics_view.scene.addItem(arc_item)
 
 #------------------------------------------------------------------------------------------------ draw wedge
     def draw_wedges(self, wedges_data, alpha):
@@ -954,6 +913,11 @@ class MainApp(QMainWindow):
         # Borrar las líneas del algoritmo ejecutado (Convex Hull, etc.)
         for item in items:
             if isinstance(item, QGraphicsLineItem):
+                self.graphics_view.scene.removeItem(item)
+
+        # Borrar el area del (alpha,k)-hull 
+        for item in items:
+            if isinstance(item, QGraphicsPolygonItem):
                 self.graphics_view.scene.removeItem(item)
 
         # Borrar el área achurada del Convex Hull (si existe)
