@@ -495,7 +495,7 @@ class GraphicsView(QGraphicsView):
         points = self.points_array  # Puntos actuales en la distribución
 
         for arc in arcs_data:
-            print("\nDatos del arco a dibujar:", arc)
+            logging.debug("\nDatos del arco a dibujar:", arc)
             center = [arc[0][0], arc[0][1]]  # Centro de la cuña
             p1 = [arc[1][0], arc[1][1]]  # Punto inicial del arco
             p2 = [arc[2][0], arc[2][1]]  # Punto final del arco
@@ -510,7 +510,7 @@ class GraphicsView(QGraphicsView):
             if matching_point is not None:
                 # Si encontramos un punto que corresponde al centro, lo usamos como inicio
                 p1 = [matching_point[0], matching_point[1]]
-                print(f"El arco empezará desde el punto correspondiente al centro: {p1}")
+                logging.debug(f"El arco empezará desde el punto correspondiente al centro: {p1}")
 
             # Calcular el radio
             norm = lambda x, y: np.sqrt(x**2 + y**2)
@@ -521,14 +521,14 @@ class GraphicsView(QGraphicsView):
             dy_start = p1[1] - center[1]
             start_angle_rad = np.arctan2(dy_start, dx_start)
             start_angle = np.degrees(start_angle_rad) % 360
-            print(f"draw arc start: punto {p1}, angulo inicial: {start_angle}")
+            logging.debug(f"draw arc start: punto {p1}, angulo inicial: {start_angle}")
 
             # Calcular ángulo final
             dx_end = p2[0] - center[0]
             dy_end = p2[1] - center[1]
             end_angle_rad = np.arctan2(dy_end, dx_end)
             end_angle = np.degrees(end_angle_rad) % 360
-            print(f"draw arc end: punto {p2}, angulo inicial: {end_angle}")
+            logging.debug(f"draw arc end: punto {p2}, angulo inicial: {end_angle}")
 
             # Ajustar la extensión del arco
             if start_angle <= end_angle:
@@ -536,7 +536,7 @@ class GraphicsView(QGraphicsView):
             else:
                 span_angle = 360 - (start_angle - end_angle)
 
-            print(f"span angle: {span_angle}")
+            logging.debug(f"span angle: {span_angle}")
 
             # Invertir Y solo al definir el rectángulo para PyQt
             center_inv = [center[0], -center[1]]
@@ -1136,7 +1136,7 @@ class MainApp(QMainWindow):
         # Calcular los arcos para la cuña activa
         arcs_data = wedge_calculator.out_compute_one_wedge(self.currentWedge)
     
-        print("out_arcs_data:\n", arcs_data)
+        logging.debug("out_arcs_data:\n", arcs_data)
         
         # Dibujar los arcos de las cuñas en la escena
         self.graphics_view.draw_wedge_arcs(arcs_data, self.alpha)
@@ -1164,7 +1164,7 @@ class MainApp(QMainWindow):
         
         # Ordenar puntos filtrados
         sorted_points = wedge_calculator.sort_points_counterclockwise(filter_point)
-        print(f'puntos sorteados: {sorted_points}')
+        logging.debug(f'puntos sorteados: {sorted_points}')
 
         # Dibujar los puntos de intersección en la pizarra
         for intersection in sorted_points:
