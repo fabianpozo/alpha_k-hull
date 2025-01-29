@@ -1,7 +1,7 @@
 import numpy as np
 from PyQt5 import QtWidgets, QtGui, QtCore
 from PyQt5.QtWidgets import QApplication, QMainWindow, QGraphicsScene, QGraphicsView, QVBoxLayout, QLabel, QGraphicsTextItem, QGraphicsLineItem, QFileDialog, QGraphicsEllipseItem, QGraphicsPathItem, QGraphicsPolygonItem
-from PyQt5.QtGui import QPen, QColor, QBrush, QPainter, QTransform, QFont, QPainterPath, QPolygonF
+from PyQt5.QtGui import QPen, QColor, QIcon, QBrush, QPainter, QTransform, QFont, QPainterPath, QPolygonF
 from PyQt5.QtCore import Qt, QLineF, QRectF, QPointF
 from design_GUI import Ui_MainWindow  # Importar el diseño generado por PyQt
 from algoritmos import *  
@@ -23,7 +23,7 @@ class GraphicsView(QGraphicsView):
 
         self.grid_size = 20  # Tamaño de la cuadrícula
         self.grid_pen = QPen(QColor(200, 200, 200), 1)  # Color gris claro para la cuadrícula
-        self.axis_pen = QPen(QColor(0, 0, 255), 2)  # Color azul para los ejes X e Y
+        self.axis_pen = QPen(QColor(0, 0, 0), 2)  # Color negro para los ejes X e Y
 
         # Configuración inicial del zoom
         self.zoom_factor = 1.15  # Factor de escala para zoom in y zoom out
@@ -541,6 +541,12 @@ class GraphicsView(QGraphicsView):
         Args:
             points (list): Lista de puntos [(x, y)] filtrados.
         """
+        # Eliminar arcos, cuñas y números de cuñas, pero mantener los puntos dibujados
+        for item in self.scene.items():
+            if isinstance(item, (QGraphicsLineItem, QGraphicsPathItem, QGraphicsPolygonItem, QGraphicsTextItem)):
+                self.scene.removeItem(item)
+            pen = QPen(Qt.green, 2)
+        
         pen = QPen(Qt.green, 2)
         brush = QBrush(QColor(0, 255, 0, 50))  # Color verde semitransparente para sombrear
 
@@ -550,6 +556,9 @@ class GraphicsView(QGraphicsView):
         for point in points:
             coords, arc1, arc2, area_id = point
             grouped_by_area[area_id].append((coords, arc1, arc2))
+
+        areas = {}  # Diccionario para almacenar el área de cada región por su area_id
+        discretized_points_by_area = {}  # Diccionario para almacenar puntos discretizados por área
 
         total_area = 0.0  # Para almacenar el área total
         discretized_points = []  # Lista global de puntos discretizados para todas las áreas
@@ -609,12 +618,13 @@ class GraphicsView(QGraphicsView):
                     y = center[1] + radius * np.sin(angle_rad)
                     area_discretized_points.append((x, y))
 
-            # Agregar los puntos discretizados de esta área a la lista general
-            discretized_points.extend(area_discretized_points)
+            # Almacenar puntos discretizados por área
+            discretized_points_by_area[area_id] = area_discretized_points
 
             # Calcular el área del polígono curvilíneo para esta área
             polygon = Polygon(area_discretized_points)
-            total_area += polygon.area
+            area_value = polygon.area
+            areas[area_id] = area_value
 
             # Dibujar el área sombreada para esta área
             polygon_qt = QtGui.QPolygonF([QtCore.QPointF(x, -y) for x, y in area_discretized_points])
@@ -623,8 +633,26 @@ class GraphicsView(QGraphicsView):
             polygon_item.setPen(QPen(Qt.NoPen))
             self.scene.addItem(polygon_item)
 
-        # Mostrar el área total en la consola
-        self.main_window.update_console(f"Área total del polígono solución: {total_area:.2f} unidades cuadradas")
+        # Mostrar las áreas individuales en la consola
+        for area_id, area_value in areas.items():
+            # Formatear los puntos de la región
+            formatted_points = [
+                f"({coords[0]:.2f}, {coords[1]:.2f})"
+                for coords, _, _ in grouped_by_area[area_id]
+            ]
+            points_str = ", ".join(formatted_points)  # Crear una cadena con los puntos
+
+            # Mostrar la información en consola
+            self.main_window.update_console(
+                f"Área de la región {area_id}: {area_value:.2f} unidades cuadradas"
+            )
+            self.main_window.update_console(
+                f"Puntos de la región {area_id}: {points_str}"
+            )
+
+        # Mostrar el área total (opcional)
+        total_area = sum(areas.values())
+        self.main_window.update_console(f"Área total de todas las regiones: {total_area:.2f} unidades cuadradas")
 
     def draw_solution_area(self, points):
         """
@@ -644,35 +672,6 @@ class GraphicsView(QGraphicsView):
 
         # Añadir el polígono a la escena
         self.scene.addItem(polygon_item)
-""""
-                                            Con este fragmento de codigo podemos hacer que se achure el area en vez que se cree un sombreado (no se actualiza bien)
-def draw_convex_hull(self, hull_indices):
-    #Dibujar las líneas que conectan los puntos del Convex Hull en la pizarra y aplicar achurado en el área.
-    points = self.points_array  # Acceder a la lista de puntos almacenados como NumPy array
-
-    # Crear un polígono a partir de los puntos del Convex Hull
-    polygon = QtGui.QPolygonF()
-    for i in hull_indices:
-        polygon.append(QtCore.QPointF(points[i][0], points[i][1]))
-
-    # Definir un pincel con un patrón de achurado
-    brush = QBrush(Qt.Dense4Pattern)  # Cambiar Dense4Pattern a otro patrón si lo deseas
-
-    # Añadir el polígono achurado a la escena
-    self.scene.addPolygon(polygon, QPen(Qt.red, 2), brush)
-
-    # También dibujar las líneas del Convex Hull
-    for i in range(len(hull_indices)):
-        p1 = points[hull_indices[i - 1]]
-        p2 = points[hull_indices[i]]
-
-        # Crear una línea entre p1 y p2
-        line = QLineF(p1[0], p1[1], p2[0], p2[1])
-        pen = QPen(Qt.red, 2)
-        self.scene.addLine(line, pen)
-
-"""
-
 
 class MainApp(QMainWindow):
     def __init__(self):
@@ -680,6 +679,7 @@ class MainApp(QMainWindow):
         self.ui = Ui_MainWindow()  # Instancia del diseño
         self.ui.setupUi(self)  # Configurar la interfaz
 
+        self.setWindowIcon(QIcon('src/resources/icono_del_programa.png'))  # Establecer el icono de la ventana
         # Inicializamos el GraphicsView personalizado
         self.graphics_view = GraphicsView(self)  # Pasamos una referencia de MainApp a GraphicsView
         # Añadir el GraphicsView al layout "Pizarra" del archivo de diseño
@@ -875,15 +875,18 @@ class MainApp(QMainWindow):
         self.ui.textEdit.append(text)
         self.ui.textEdit.setReadOnly(True)
         
-    def clear_all_points(self):
+    def clear_all_points(self): #Icono basurero
         """Borrar todos los puntos, números, cuñas y líneas del algoritmo de la escena."""
-    # Borrar todos los puntos y sus números
+        # Borrar todos los puntos y sus números
         for point_item, point_number_item in self.graphics_view.point_items:
             self.graphics_view.scene.removeItem(point_item)
             self.graphics_view.scene.removeItem(point_number_item)
 
         # Limpiar la lista de puntos
         self.graphics_view.point_items.clear()
+
+        # Reiniciar el contador de puntos
+        self.graphics_view.point_counter = 1 
 
         # Limpiar la matriz NumPy
         self.graphics_view.points_array = np.empty((0, 2))
@@ -933,7 +936,7 @@ class MainApp(QMainWindow):
 
 
     def clear_algorithm(self):
-        """Borrar solo las líneas generadas por el algoritmo ejecutado (Convex Hull) pero dejar los puntos en su lugar."""
+        """Borrar solo las líneas generadas por el algoritmo ejecutado pero dejar los puntos en su lugar."""
         # Obtener todos los elementos en la escena
         items = self.graphics_view.scene.items()
 
@@ -1010,31 +1013,6 @@ class MainApp(QMainWindow):
             area += x1 * y2 - x2 * y1
         return abs(area) / 2.0
 
-    def run_akhull(self):
-        points_np = self.graphics_view.points_array  # Obtener los puntos actuales de la escena
-
-        # Depurar el número de puntos
-        self.update_console(f"Ejecutando (alpha, k)-hull con {len(points_np)} puntos.")
-        
-        if len(points_np) < 3:
-            self.update_console("No se puede calcular el (alpha, k)-hull con menos de 3 puntos.")
-            return
-
-        # Crear instancia del algoritmo AKHull
-        akhull = AKHull(self.k, self.alpha)  # Usar los valores de k y alpha configurados dinámicamente
-        akhull.set_points(points_np)
-
-        # Limpiar las líneas anteriores del (alpha, k)-hull
-        self.graphics_view.clear_convex_hull_lines()
-
-        # Calcular las líneas y arcos
-        lines_and_arcs = list(akhull.compute_akhull())
-
-        # Dibujar las líneas y arcos en la interfaz
-        self.graphics_view.draw_akhull(lines_and_arcs)
-
-          # Depuración final
-        self.update_console(f"Terminó el cálculo del (alpha, k)-hull. Total de elementos dibujados: {len(lines_and_arcs)}")
 
 #-----------wedge
     def show_wedges(self):
