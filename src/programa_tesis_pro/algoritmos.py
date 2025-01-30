@@ -969,7 +969,7 @@ class WedgeCalculator:
                 radius = np.linalg.norm(start - center)
                 distance_to_center = np.linalg.norm(point_array - center)
 
-                if np.isclose(distance_to_center, radius, atol=1e-6):
+                if np.isclose(distance_to_center, radius, atol=1e-3):
                     valid = True
                     continue
                 # Si el punto tiene radio menor al del arco, lo descartamos
