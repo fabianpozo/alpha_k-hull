@@ -46,6 +46,7 @@ class GraphicsView(QGraphicsView):
 
         self.hull_polygon_item = None  # Almacenará el polígono del Convex Hull
         self.point_counter = 1 #enumerar puntos intersecciones de los arcos computados
+        self.all_arcs_data = []  # Lista para almacenar todos los arcos calculados
 
     def drawBackground(self, painter, rect):
         """Dibujar la cuadrícula y los ejes dentro de los límites definidos."""
@@ -512,6 +513,7 @@ class GraphicsView(QGraphicsView):
             self.scene.addItem(graphics_arc)
 
             self.datos_de_los_arcos.append((center, p1, p2))  # Guardamos centro, p1 y p2
+            self.all_arcs_data.append((center, p1, p2))  # Guardamos en la lista global de arcos
 
     def add_intersection_point(self, point):
         """
@@ -887,6 +889,12 @@ class MainApp(QMainWindow):
 
         # Reiniciar el contador de puntos
         self.graphics_view.point_counter = 1 
+        
+        # Limpiar la lista de arcos
+        self.all_arcs_data = [] 
+        
+        # Limpiar la lista de intersecciones (visualización)
+        self.graphics_view.all_arcs_data.clear()  # Limpiar los arcos de las cuñas
 
         # Limpiar la matriz NumPy
         self.graphics_view.points_array = np.empty((0, 2))
@@ -1089,12 +1097,12 @@ class MainApp(QMainWindow):
         Ejecuta el barrido de línea para detectar intersecciones de los arcos y visualiza los puntos resultantes.
         """
             # Verificar si hay datos de arcos disponibles
-        if not hasattr(self.graphics_view, "datos_de_los_arcos") or not self.graphics_view.datos_de_los_arcos:
+        if not hasattr(self.graphics_view, "all_arcs_data") or not self.graphics_view.all_arcs_data:
             self.update_console("No hay datos de arcos disponibles para procesar.")
             return
 
         # Obtener los datos de los arcos desde el atributo correspondiente
-        arcs = self.graphics_view.datos_de_los_arcos
+        arcs = self.graphics_view.all_arcs_data
 
         # Crear una instancia de WedgeCalculator para usar su función line_sweep_for_intersections
         wedge_calculator = WedgeCalculator(self.k, self.alpha, self.graphics_view.points_array)
@@ -1123,7 +1131,7 @@ class MainApp(QMainWindow):
         Ejecuta el cálculo del área solución y dibuja el área sombreada.
         """
         # Obtener los datos de los arcos desde el atributo correspondiente
-        arcs = self.graphics_view.datos_de_los_arcos
+        arcs = self.graphics_view.all_arcs_data
 
         wedge_calculator = WedgeCalculator(self.k, self.alpha, self.graphics_view.points_array)
 
@@ -1135,12 +1143,6 @@ class MainApp(QMainWindow):
 
         # Ordenar puntos filtrados
         sorted_points = wedge_calculator.sort_points_counterclockwise(filter_point)
-
-        # Calcular el área del polígono
-      #revisar   polygon_area = wedge_calculator.calculate_polygon_area(sorted_points)
-  
-        # Mostrar en consola el área
-       #revisar  self.update_console(f"Área del polígono solución: {polygon_area:.2f} unidades cuadradas")
 
         grupos_de_puntos = wedge_calculator.group_intersection_points(sorted_points)
 
